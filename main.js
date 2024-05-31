@@ -1,48 +1,91 @@
-import * as THREE from "three";
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import imgUrl from './earth.jpg'
 
+// import { lights } from 'three/examples/jsm/nodes/Nodes.js';
+// import { update } from 'three/examples/jsm/libs/tween.module.js';
+
+//scene
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-);
 
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
 
-const geometry = new THREE.BoxGeometry(2, 1, 1);
-const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-const cube = new THREE.Mesh(geometry, material);
-scene.add(cube);
 
-camera.position.z = 5;
 
-function animate() {
-  requestAnimationFrame(animate);
 
-  cube.rotation.x += 0.01;
-  cube.rotation.y += 0.01;
 
-  renderer.render(scene, camera);
-}
 
-// Ajouter un écouteur d'événement pour l'événement 'wheel' sur l'élément souhaité
-window.addEventListener("wheel", function (event) {
-  if (event.deltaY < 0) {
-    camera.position.z -= 0.05;
-  } else {
-    camera.position.z += 0.05;
-  }
 
-  if (event.deltaX < 0) {
-    console.log("Défilement vers la gauche");
-  } else if (event.deltaX > 0) {
-    console.log("Défilement vers la droite");
-  }
 
-  event.preventDefault();
+//Create pur Sphere
+const geometry = new THREE.SphereGeometry( 3 , 64 , 64 );  // 15 = radius 64 an 64 = witdth and height
+const texture = new THREE.TextureLoader().load(imgUrl); 
+texture.wrapS = THREE.RepeatWrapping;
+texture.wrapT = THREE.RepeatWrapping;
+texture.repeat.set( 4, 4 );
+texture.colorSpace = THREE.SRGBColorSpace;
+const loader = new THREE.TextureLoader();
+
+
+const material = new THREE.MeshStandardMaterial( {
+  map: loader.load(imgUrl)
 });
 
-animate();
+const mesh = new THREE.Mesh(geometry, material);
+
+scene.add(mesh);
+
+
+
+//Sizes
+const sizes = {
+  width: window.innerWidth,
+  height: window.innerHeight, 
+}
+
+
+
+//Light
+const light = new THREE.PointLight(0xffffff, 10, 60, 1.7);
+light.position.set(-95, -10, 10)
+scene.add(light)
+
+
+
+
+//camera
+const camera = new THREE.PerspectiveCamera(45,sizes.width/sizes.height ,0.1, 100); //45 = FOV aspect ratio= 800x600
+camera.position.z = 20;
+scene.add(camera);
+
+
+
+//renderer
+const canvas = document.querySelector('.webgl');
+const renderer = new THREE.WebGLRenderer({canvas});
+renderer.setSize(sizes.width, sizes.height);
+renderer.render(scene, camera);
+
+
+//resize
+window.addEventListener("resize", () => {
+  //update size
+  sizes.width = window.innerWidth
+  sizes.height = window.innerHeight
+  //update camera
+  camera.updateProjectionMatrix()
+  camera.aspect = sizes.width / sizes.height
+  renderer.setSize(sizes.width, sizes.height)
+});
+
+
+const loop = () => {
+  light.position.x += 0.15
+  if (light.position.x > 95){
+    light.position.x = -95
+    
+    
+  }
+  renderer.render(scene, camera)
+  window.requestAnimationFrame(loop)
+}
+loop()
